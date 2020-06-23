@@ -1,25 +1,3 @@
-###### Arun Woosaree
-###### Tamara Bojovic
-
-
-# CMPUT 275 Final Project - Python Chess Game
-
-For our final project, we decided to make a player versus computer implementation
-of chess using the pygame library for Python. It includes all the essential rules
-for chess. The computer player uses the minimax strategy with alpha-beta pruning
-for generating and deciding moves. It explores all possible moves, then explores
-their possible moves and so on. This essentially creates a search tree to a depth of 3.
-The best move is decided by evaluating the 'score' of the board. A graphical
-representation of the board is rendered with a side menu with contextual tips,
-that displays useful information such as whose turn it is, if the move you're
-attempting is invalid, if someone is in check, among other things.
-The mouse is used to select pieces and move them. The program only allows you
-to make valid moves according to the rules of chess, and also includes the
-special moves: castling, and promotion. The program automatically detects check
-and checkmate, and for the latter, ends the game and declares the winner.
-
-For more specific instructions on how to play, see 'Usage Instructions'.
-
 ---
 ## Setup Instructions:
 ###### Make sure you're using python 3
