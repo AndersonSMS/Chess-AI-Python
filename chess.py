@@ -107,14 +107,20 @@ def run_game():
     if player != 1:
         player='AI'
 
-
-
     while not gameover:
 
         # Se o tempo acabou
         if time < 1:
-            player = 'AI'
-            textTime ='\nTime: '+str(int(maxTime/FPS))+'s'
+            if checkWhite:
+                print("Player checkmate")
+                gameover = True
+                player = 'AI'
+                update_sidemenu(
+                    'Checkmate!\nCPU Ganhou!\nPressione qualquer tecla\n para continuar.', (255, 255, 0))
+                break
+            else:
+                player = 'AI'
+                textTime ='\nTime: '+str(int(maxTime/FPS))+'s'
         else:
             time-=1
             textTime ='\nTime: '+str(int(time/FPS))+'s'
@@ -255,8 +261,9 @@ def run_game():
             time = maxTime
             
             # get a move from the minimax/alphabeta algorithm, at a search depth of 3
-            value, move = minimax(board, 3, float(
-                "-inf"), float("inf"), True, trans_table)
+            #value, move = minimax(board, 3, float("-inf"), float("inf"), True, trans_table)
+            value, move = botIA(board, 2, float("-inf"), float("inf"), False, False, trans_table)
+            #board, iteration,depth, alpha, beta, White, memo)
 
             # this indicates an AI in checkmate; it has no possible moves
             if value == float("-inf") and move == 0:
@@ -269,8 +276,8 @@ def run_game():
 
             # perform the AI's move
             else:
-                start = move[0]
-                end = move[1]
+                start = move[1][0]
+                end = move[1][1]
                 piece = board.array[start[0]][start[1]]
                 dest = board.array[end[0]][end[1]]
 
@@ -292,7 +299,7 @@ def run_game():
                 # check to see if the player is now in check, as a result of the
                 # AI's move
                 attacked = move_gen(board, "b", True)
-                if (board.white_king.y, board.white_king.x) in attacked:
+                if (board.white_king.y, board.white_king.x) in attacked:    
                     update_sidemenu('Your Turn: Check!'+textTime, (255, 0, 0))
                     checkWhite = True
                 else:
