@@ -99,7 +99,7 @@ def run_game():
 
     checkWhite = False
     FPS = 60
-    maxTime = 20
+    maxTime = 60
     maxTime *= FPS
     time = maxTime
     textTime = ''
@@ -262,7 +262,7 @@ def run_game():
             
             # get a move from the minimax/alphabeta algorithm, at a search depth of 3
             #value, move = minimax(board, 3, float("-inf"), float("inf"), True, trans_table)
-            value, move = botIA(board, 2, float("-inf"), float("inf"), False, False, trans_table)
+            value, move = botIA(board, 5, float("-inf"), float("inf"), False, True, trans_table)
             #board, iteration,depth, alpha, beta, White, memo)
 
             # this indicates an AI in checkmate; it has no possible moves

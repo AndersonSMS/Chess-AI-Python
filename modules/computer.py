@@ -259,8 +259,10 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
     else:
         moves = move_gen(board,"b")
 
-    ###
-    bestValue = float("-inf")
+    if max:
+        bestValue = float("-inf")
+    else:
+        bestValue = float("inf")
     bestMove = []
     listMoves = []
 
@@ -287,6 +289,7 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
                     if pawn_promotion:
                         board.score -= 9 # revert the score from the promotion
                     #continue # the move is illegal, thus we don't care and move on
+                    continue
             else:
                 # see if the move puts you in check
                 attacked = move_gen(board,White,True) #return spaces attacked by white
@@ -297,6 +300,7 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
                     if pawn_promotion:
                         board.score -= 9 # revert the score from the promotion
                     #continue # the move is illegal, thus we don't care and move on
+                    continue
 
             
             #change the score if a piece was captured
@@ -310,6 +314,20 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
             # player's turn
             #v, __ = minimax(board, iteration - 1,alpha,beta, not(White), memo)
 
+            #amazena o movimento
+            thisMove = (start, (end[0],end[1]))
+            thisMove = board.score, thisMove
+            listMoves.append(thisMove)
+
+            if max:
+                if board.score > bestValue: 
+                    bestMove = thisMove
+                    bestValue = board.score
+            else:
+                if board.score < bestValue: 
+                    bestMove = thisMove
+                    bestValue = board.score
+
             # revert the board and the score
             board.move_piece(piece,start[0],start[1],False, True)
             board.array[end[0]][end[1]] = dest
@@ -319,40 +337,33 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
                 score = 9
             if dest != None:
                 score = board.pvalue_dict[type(dest)]
-            if max:
-                board.score -= score
-            else:
-                board.score += score
+            if not(max):
+                score = -score
+            board.score -= score
 
-            #amazena o movimento
-            thisMove = (start, (end[0],end[1]))
-            thisMove = score, thisMove
-            listMoves.append(thisMove)
-
-            if score > bestValue: 
-                bestMove = thisMove
-                bestValue = score
-
-
-            #bestValue = max(bestValue, score)
-            #alpha = max(alpha, bestValue)
-
-            #if iteration <= 1:#se chegou no final da recursão retorna o melhor movimento
-                #return actualMove[0], actualMove[1]
-
-            #if beta <= alpha:
-            #    return bestValue, move
     if iteration <= 1:
         return bestValue, bestMove[1]
+
     if len(listMoves) > 0:
         move = 0
-        bestValue = float("-inf")
+        if max:
+            bestValue = float("-inf")
+        else:
+            bestValue = float("inf")
 
-        for x in range(1, 10):#os 10 melhores scores
+        for x in range(1, 30):#os 10 melhores scores
+            #verificar se ainda tem movimentos na lista
+            if len(listMoves) == 0:
+                break
+                
             actualMove = listMoves[0]
             for move1 in listMoves:
-                if actualMove[0] < move1[0]:
-                    actualMove = move1
+                if max:
+                    if actualMove[0] < move1[0]:
+                        actualMove = move1
+                else:
+                    if actualMove[0] > move1[0]:
+                        actualMove = move1
             listMoves.remove(actualMove)
             #copyBoard = copy.copy(board)
 
@@ -369,18 +380,36 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
 
             #change the score if a piece was captured
             if dest != None:
-                board.score += board.pvalue_dict[type(dest)]
-
-            valueAT, moveAT = botIA(board, iteration-1, alpha, beta, not(White), not(max), memo)
-            ##################valueAT pode estar com valor errado quando uma peça e capturada
-            if valueAT > bestValue:
-                if dest:
-                    bestValue = board.pvalue_dict[type(dest)]
+                if max:
+                    board.score += board.pvalue_dict[type(dest)]
                 else:
-                    bestValue = 0
-                move = actualMove
+                    board.score -= board.pvalue_dict[type(dest)]
+            #############################################
+            # #########################################
+            # ele não esta vendo certo a melhor jogada do oponente, perdendo peças valiosas por peoes
+            # talvez retornar o borard.score da recurção e comparar ele, não o bestValue atual
+            ###########################################
+            # verificar check e mate leão que não esta impedindo nem parando o jogo
+            # #########################################
+            # o bot esta indo muito seco em um check mate, achando que não vou impedilo fazendo
+            # jogadas simples como comer a peça que ele esta avançado e tals
+            #############################################
+            # fazer um metodo para calcular score se baseando em posicionamento e atividade das peças
+            ############################################
+            if iteration == 3:
+                if endPiece[0] == (0, 0) and endPiece[1] == (2, 0):
+                    stoper = True
+            valueAT, moveAT = botIA(board, iteration-1, alpha, beta, not(White), not(max), memo)
+            # parar antes (338) de depois (390) na recurção
+            if max:
+                if valueAT > bestValue:
+                    bestValue = valueAT
+                    move = actualMove
+            else:
+                if valueAT < bestValue:
+                    bestValue = valueAT
+                    move = actualMove
 
-            # revert the board and the score############################### não esta revertendo
             board.move_piece(piece,startPiece[0],startPiece[1],False, True)
             board.array[endPiece[0]][endPiece[1]] = dest
             score = 0
@@ -388,7 +417,10 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
                 score = 9
             if dest != None:
                 score = board.pvalue_dict[type(dest)]
-            board.score -= score
+            if max:
+                board.score -= score
+            else:
+                board.score += score
 
         return bestValue, move
         ##retornando o move errado
@@ -399,121 +431,6 @@ def botIA(board, iteration, alpha, beta, White, max, memo):
         return bestValue, move
     except:
         return bestValue, 0 # no best move was found, indicates AI in checkmate
-
-
-##############################################
-    # convert the 2D list to a tuple, so it can be used as a key in memo
-    tuple_mat = matrix_to_tuple(board.array, board.empty)
-
-    #if tuple_mat in memo and depth != 3: # set this to the depth of the initial call
-    #    return memo[tuple_mat], 0
-
-    #if depth == 0: # end of the search is reached
-    #    memo[tuple_mat] = board.score
-    #    return board.score, 0
-
-    if White:
-        bestValue = float("-inf")
-        black_moves = move_gen(board,"b")
-
-        # explore all the potential moves from this board state
-        for start, move_set in black_moves.items():
-            for end in move_set:
-
-                # perform the move
-                # preserve the start and the end pieces, in case the move
-                # needs to be reversed
-                piece = board.array[start[0]][start[1]]
-                dest = board.array[end[0]][end[1]]
-
-                # if a pawn promotion occurs, return the pieces involved
-                pawn_promotion = board.move_piece(piece,end[0],end[1],False)
-
-                # see if the move puts you in check
-                attacked = move_gen(board,"w",True) #return spaces attacked by white
-                if (board.black_king.y,board.black_king.x) in attacked:
-                    # reverse the move
-                    board.move_piece(piece,start[0],start[1],False, True)
-                    board.array[end[0]][end[1]] = dest
-                    if pawn_promotion:
-                        board.score -= 9 # revert the score from the promotion
-                    continue # the move is illegal, thus we don't care and move on
-
-                #change the score if a piece was captured
-                if dest != None:
-                    board.score += board.pvalue_dict[type(dest)]
-
-                # search deeper for the children, this time its the minimizing
-                # player's turn
-                v, __ = minimax(board, iteration - 1,alpha,beta, False, memo)
-
-                # revert the board and the score
-                board.move_piece(piece,start[0],start[1],False, True)
-                board.array[end[0]][end[1]] = dest
-                if pawn_promotion:
-                    board.score -= 9
-                if dest != None:
-                    board.score -= board.pvalue_dict[type(dest)]
-
-                if v >= bestValue: # move is better than best, store it
-                    move = (start, (end[0],end[1]))
-
-                bestValue = max(bestValue, v)
-                alpha = max(alpha, bestValue)
-
-                if beta <= alpha:
-                    return bestValue, move
-        try:
-            return bestValue, move
-        except:
-            return bestValue, 0 # no best move was found, indicates AI in checkmate
-
-
-    else:    #(* minimizing player *)
-        bestValue = float("inf")
-        white_moves = move_gen(board,"w")
-
-        # explore all the potential moves from this board state
-        for start, move_set in white_moves.items():
-            for end in move_set:
-
-                # perform the move
-                piece = board.array[start[0]][start[1]]
-                dest = board.array[end[0]][end[1]]
-                pawn_promotion = board.move_piece(piece,end[0],end[1],False)
-
-                # see if the move puts you in check
-                attacked = move_gen(board,"b",True) #return spaces attacked by white
-                if (board.white_king.y,board.white_king.x) in attacked:
-                    board.move_piece(piece,start[0],start[1],False,True)
-                    board.array[end[0]][end[1]] = dest
-                    if pawn_promotion:
-                        board.score += 9
-                    continue # move is illegal, don't consider it
-
-                # update the score
-                if dest != None:
-                    board.score -= board.pvalue_dict[type(dest)]
-
-                v, __ = minimax(board, iteration - 1,alpha,beta, True, memo)
-                
-                bestValue = min(v, bestValue)
-                beta = min(beta,bestValue)
-
-                # reverse the move, revert the score
-                board.move_piece(piece,start[0],start[1],False,True)
-                board.array[end[0]][end[1]] = dest
-                if pawn_promotion:
-                    board.score += 9
-                if dest != None:
-                    board.score += board.pvalue_dict[type(dest)]
-
-                if beta <= alpha:
-                    return bestValue, 0
-
-        return bestValue, 0
-
-
 
 if __name__ == "__main__":
 
